@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "triLunch Arcade",
-  description: "Discover the perfect lunch spots around you.",
+  title: "triLunch",
+  description: "Modern lunch spot discovery for teams.",
 };
 
 export default function RootLayout({
@@ -13,8 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased selection:bg-arcade-accent selection:text-arcade-bg">
-        <div className="crt-overlay"></div>
+      <body className="antialiased selection:bg-osttra-rose selection:text-white bg-dark-bg text-gray-200">
         {children}
       </body>
     </html>

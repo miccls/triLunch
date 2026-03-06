@@ -1,56 +1,51 @@
 @import "tailwindcss";
 
 @theme {
-  --color-arcade-bg: #050505;
-  --color-arcade-panel: #111111;
-  --color-arcade-neon: #39ff14;
-  --color-arcade-neon-dark: #2ab20e;
-  --color-arcade-accent: #ff007f;
-  --color-arcade-accent-dark: #b30059;
-  --color-arcade-text: #e0e0e0;
+  --color-osttra-rose: #FF0060;
+  --color-osttra-rose-hover: #E60056;
+  --color-osttra-indigo: #530074;
+  --color-dark-bg: #0A0A0F;
+  --color-dark-surface: #16161F;
+  --color-dark-border: #2D2D39;
 }
 
 body {
-  background-color: var(--color-arcade-bg);
-  color: var(--color-arcade-neon);
-  font-family: "Courier New", Courier, monospace;
+  background-color: var(--color-dark-bg);
+  color: #F3F4F6;
+  font-family: "Inter", "Montserrat", system-ui, -apple-system, sans-serif;
 }
 
-/* CRT Scanline Effect */
-.crt-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(
-    rgba(18, 16, 16, 0) 50%,
-    rgba(0, 0, 0, 0.25) 50%,
-    rgba(0, 0, 0, 0.25) 100%
-  );
-  background-size: 100% 4px;
-  z-index: 9999;
-  pointer-events: none;
+/* Smooth glass effect */
+.glass-panel {
+  background: rgba(22, 22, 31, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-dark-border);
 }
 
-/* Hacker Glow */
-.neon-text {
-  text-shadow: 0 0 5px var(--color-arcade-neon), 0 0 10px var(--color-arcade-neon);
-}
-.neon-border {
-  box-shadow: 0 0 5px var(--color-arcade-neon), inset 0 0 5px var(--color-arcade-neon);
-}
-.neon-text-accent {
-  text-shadow: 0 0 5px var(--color-arcade-accent), 0 0 10px var(--color-arcade-accent);
-}
-.neon-border-accent {
-  box-shadow: 0 0 5px var(--color-arcade-accent), inset 0 0 5px var(--color-arcade-accent);
+/* Subtle glowing accent */
+.glow-rose {
+  box-shadow: 0 0 20px rgba(255, 0, 96, 0.2);
 }
 
-/* Map Dark Mode Hack */
-.dark-map .leaflet-layer,
-.dark-map .leaflet-control-zoom-in,
-.dark-map .leaflet-control-zoom-out,
-.dark-map .leaflet-control-attribution {
+/* Modern scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-dark-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-dark-border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3F3F4E;
+}
+
+/* Map Dark Mode Refined */
+.dark-map .leaflet-layer {
   filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+.dark-map .leaflet-container {
+  background: #0A0A0F !important;
 }
