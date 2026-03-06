@@ -1,16 +1,56 @@
 @import "tailwindcss";
 
 @theme {
-  --color-osttra-rose: #FF0060;
-  --color-osttra-rose-dark: #D90052;
-  --color-osttra-indigo: #530074;
-  --color-osttra-indigo-dark: #3A0052;
-  --color-osttra-gray: #EEEEEE;
-  --color-osttra-light: #F8F9FA;
+  --color-arcade-bg: #050505;
+  --color-arcade-panel: #111111;
+  --color-arcade-neon: #39ff14;
+  --color-arcade-neon-dark: #2ab20e;
+  --color-arcade-accent: #ff007f;
+  --color-arcade-accent-dark: #b30059;
+  --color-arcade-text: #e0e0e0;
 }
 
 body {
-  font-family: "Inter", "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: var(--color-osttra-light);
-  color: #111827;
+  background-color: var(--color-arcade-bg);
+  color: var(--color-arcade-neon);
+  font-family: "Courier New", Courier, monospace;
+}
+
+/* CRT Scanline Effect */
+.crt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.25) 50%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
+  background-size: 100% 4px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Hacker Glow */
+.neon-text {
+  text-shadow: 0 0 5px var(--color-arcade-neon), 0 0 10px var(--color-arcade-neon);
+}
+.neon-border {
+  box-shadow: 0 0 5px var(--color-arcade-neon), inset 0 0 5px var(--color-arcade-neon);
+}
+.neon-text-accent {
+  text-shadow: 0 0 5px var(--color-arcade-accent), 0 0 10px var(--color-arcade-accent);
+}
+.neon-border-accent {
+  box-shadow: 0 0 5px var(--color-arcade-accent), inset 0 0 5px var(--color-arcade-accent);
+}
+
+/* Map Dark Mode Hack */
+.dark-map .leaflet-layer,
+.dark-map .leaflet-control-zoom-in,
+.dark-map .leaflet-control-zoom-out,
+.dark-map .leaflet-control-attribution {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }

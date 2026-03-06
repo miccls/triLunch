@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 // Dynamically import the map to avoid SSR errors with window object
 const MapView = dynamic(() => import('@/components/MapView'), {
   ssr: false,
-  loading: () => <div className="h-[600px] w-full bg-gray-100 animate-pulse rounded-md border border-osttra-gray flex items-center justify-center">Loading interactive map...</div>
+  loading: () => <div className="h-[600px] w-full bg-arcade-panel border-2 border-arcade-neon flex items-center justify-center neon-text blink">LOADING MAP_SYSTEM...</div>
 });
 
 export default function Home() {
@@ -30,7 +30,6 @@ export default function Home() {
   const [pollLink, setPollLink] = useState<string | null>(null);
 
   const handleSearch = (isLucky: boolean = false) => {
-    // Only require query if it's a standard search
     if (!isLucky && !query) return;
     
     setLoading(true);
@@ -41,7 +40,7 @@ export default function Home() {
     setPollLink(null);
 
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
+      setError("ERR_SYS_01: LOCATION_MODULE_OFFLINE");
       setLoading(false);
       return;
     }
@@ -53,7 +52,6 @@ export default function Home() {
         setUserLocation({ lat, lng });
 
         try {
-          // If lucky search and no query, default to "lunch" to get a broad pool
           const searchQuery = (!query && isLucky) ? "lunch" : query;
 
           const res = await fetch("/api/search", {
@@ -62,7 +60,7 @@ export default function Home() {
             body: JSON.stringify({ query: searchQuery, lat, lng }),
           });
           
-          if (!res.ok) throw new Error("Failed to fetch restaurants");
+          if (!res.ok) throw new Error("ERR_NET_02: TARGET_UNREACHABLE");
           
           const data = await res.json();
           let fetchedResults = data.restaurants || [];
@@ -78,13 +76,13 @@ export default function Home() {
           }
 
         } catch (err: any) {
-          setError(err.message || "An unexpected error occurred");
+          setError(err.message || "ERR_SYS_03: UNKNOWN_EXCEPTION");
         } finally {
           setLoading(false);
         }
       },
       () => {
-        setError("Unable to retrieve your location. Please ensure location services are enabled.");
+        setError("ERR_SYS_04: LOC_PERMISSION_DENIED. ACCESS RESTRICTED.");
         setLoading(false);
       }
     );
@@ -96,7 +94,7 @@ export default function Home() {
         return prev.filter(id => id !== restaurantId);
       }
       if (prev.length >= 3) {
-        alert("You can select up to 3 restaurants for a poll.");
+        alert("SYS_LIMIT_REACHED: MAX 3 TARGETS ALLOWED.");
         return prev;
       }
       return [...prev, restaurantId];
@@ -115,14 +113,14 @@ export default function Home() {
         body: JSON.stringify({ restaurants: selectedRestaurants, query })
       });
       
-      if (!res.ok) throw new Error("Failed to create poll");
+      if (!res.ok) throw new Error("FAIL");
       
       const data = await res.json();
       const origin = window.location.origin;
       setPollLink(`${origin}/poll/${data.id}`);
     } catch (err) {
       console.error(err);
-      alert("Error creating poll.");
+      alert("ERR_SYS_05: CO-OP_LINK_FAIL.");
     } finally {
       setPollCreating(false);
     }
@@ -145,86 +143,83 @@ export default function Home() {
   }, [results, priceFilter, sortBy]);
 
   return (
-    <div className="min-h-screen bg-osttra-light text-gray-900 font-sans flex flex-col">
-      <header className="bg-gradient-to-br from-osttra-indigo to-osttra-indigo-dark text-white py-16 px-6 md:px-12 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-osttra-rose blur-[100px]" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] rounded-full bg-white blur-[80px]" />
-        </div>
+    <div className="min-h-screen bg-arcade-bg text-arcade-text flex flex-col uppercase relative">
+      {/* Grid background effect */}
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-[linear-gradient(rgba(57,255,20,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.2)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
 
-        <div className="max-w-5xl mx-auto relative z-10 text-center">
-          <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-4">
-            tri<span className="text-osttra-rose">Lunch</span>
+      <header className="relative z-10 py-16 px-6 md:px-12 border-b-4 border-arcade-neon neon-border shadow-[0_0_20px_rgba(57,255,20,0.3)] bg-arcade-panel">
+        <div className="max-w-5xl mx-auto text-center">
+          <h1 className="text-6xl md:text-8xl font-black tracking-widest mb-4 neon-text">
+            TRI_<span className="text-arcade-accent neon-text-accent">LUNCH</span>
           </h1>
-          <p className="text-lg md:text-xl font-light text-gray-200 mb-8 max-w-2xl mx-auto">
-            Discover the perfect dining experience nearby.
+          <p className="text-xl md:text-2xl text-arcade-neon mb-8 tracking-widest">
+            &gt; INITIALIZE TARGET ACQUISITION...
           </p>
 
-          <div className="bg-white/10 backdrop-blur-md p-2 rounded-lg max-w-4xl mx-auto flex flex-col md:flex-row gap-2 border border-white/20 shadow-2xl">
+          <div className="p-4 bg-arcade-bg border-2 border-arcade-neon neon-border max-w-4xl mx-auto flex flex-col md:flex-row gap-4">
             <input
               type="text"
-              placeholder="What are you craving? (e.g., sushi, pizza, salad)"
-              className="flex-1 px-6 py-4 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-osttra-rose transition-all text-lg font-medium placeholder-gray-400"
+              placeholder="ENTER CRAVING_ (E.G. SUSHI, PIZZA)"
+              className="flex-1 px-4 py-3 bg-black text-arcade-neon border border-arcade-neon focus:outline-none focus:ring-2 focus:ring-arcade-accent placeholder-arcade-neon/50 text-lg uppercase tracking-wider"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch(false)}
             />
-            <div className="flex gap-2">
+            <div className="flex gap-4">
               <button
                 onClick={() => handleSearch(false)}
                 disabled={loading}
-                className="bg-osttra-rose hover:bg-osttra-rose-dark text-white font-bold text-lg py-4 px-8 rounded-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center uppercase tracking-wide whitespace-nowrap"
+                className="bg-transparent border-2 border-arcade-neon text-arcade-neon hover:bg-arcade-neon hover:text-black font-bold text-lg py-3 px-6 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center tracking-widest"
               >
-                {loading ? "Searching..." : "Find Lunch"}
+                {loading ? "SCANNING..." : "EXECUTE"}
               </button>
               <button
                 onClick={() => handleSearch(true)}
                 disabled={loading}
-                className="bg-white hover:bg-gray-100 text-osttra-indigo font-bold text-lg py-4 px-6 rounded-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center uppercase tracking-wide whitespace-nowrap shadow-sm border border-transparent"
-                title="Find a highly-rated restaurant nearby"
+                className="bg-transparent border-2 border-arcade-accent text-arcade-accent hover:bg-arcade-accent hover:text-black font-bold text-lg py-3 px-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center tracking-widest"
+                title="RNG Target Selector"
               >
-                🎲 Lucky
+                🎲 RNG
               </button>
             </div>
           </div>
-          {error && <p className="text-red-400 mt-4 text-sm font-medium">{error}</p>}
+          {error && <p className="text-arcade-accent neon-text-accent mt-4 text-sm font-bold tracking-widest animate-pulse">{error}</p>}
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
+      <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full relative z-10">
         {hasSearched && !loading && !error && results.length > 0 && (
-          <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-md shadow-sm border border-osttra-gray mb-8 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-center bg-arcade-panel p-4 border-2 border-arcade-neon mb-8 gap-4 neon-border">
             
-            {/* View Toggles & Filters */}
-            <div className="flex flex-wrap gap-4 items-center">
-              <div className="flex bg-osttra-light p-1 rounded-md border border-osttra-gray">
+            <div className="flex flex-wrap gap-6 items-center">
+              <div className="flex gap-2">
                 <button 
                   onClick={() => setViewMode('list')}
-                  className={`px-4 py-1.5 text-sm font-bold rounded-sm transition-colors ${viewMode === 'list' ? 'bg-white text-osttra-indigo shadow-sm' : 'text-gray-500 hover:text-osttra-indigo'}`}
+                  className={`px-4 py-2 text-sm font-bold border-2 transition-colors ${viewMode === 'list' ? 'bg-arcade-neon text-black border-arcade-neon' : 'bg-transparent text-arcade-neon border-arcade-neon hover:bg-arcade-neon/20'}`}
                 >
-                  List View
+                  DATABANK
                 </button>
                 <button 
                   onClick={() => setViewMode('map')}
-                  className={`px-4 py-1.5 text-sm font-bold rounded-sm transition-colors ${viewMode === 'map' ? 'bg-white text-osttra-indigo shadow-sm' : 'text-gray-500 hover:text-osttra-indigo'}`}
+                  className={`px-4 py-2 text-sm font-bold border-2 transition-colors ${viewMode === 'map' ? 'bg-arcade-neon text-black border-arcade-neon' : 'bg-transparent text-arcade-neon border-arcade-neon hover:bg-arcade-neon/20'}`}
                 >
-                  Map View
+                  RADAR
                 </button>
               </div>
 
-              <div className="h-6 w-px bg-gray-300 hidden md:block"></div>
+              <div className="h-8 w-1 bg-arcade-neon hidden md:block"></div>
 
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-semibold text-osttra-indigo">Sort by:</label>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-osttra-light border border-osttra-gray text-gray-900 text-sm rounded-sm p-1.5 focus:ring-osttra-rose">
-                  <option value="closest">Closest</option>
-                  <option value="rating">Highest Rated</option>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-bold text-arcade-neon tracking-widest">SORT:</label>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-black border border-arcade-neon text-arcade-neon text-sm p-2 focus:ring-arcade-accent uppercase tracking-widest">
+                  <option value="closest">PROXIMITY</option>
+                  <option value="rating">HIGH_SCORE</option>
                 </select>
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-semibold text-osttra-indigo">Price:</label>
-                <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)} className="bg-osttra-light border border-osttra-gray text-gray-900 text-sm rounded-sm p-1.5 focus:ring-osttra-rose">
-                  <option value="All">All</option>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-bold text-arcade-neon tracking-widest">CREDITS:</label>
+                <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)} className="bg-black border border-arcade-neon text-arcade-neon text-sm p-2 focus:ring-arcade-accent uppercase tracking-widest">
+                  <option value="All">ANY</option>
                   <option value="$">$</option>
                   <option value="$$">$$</option>
                   <option value="$$$">$$$</option>
@@ -235,40 +230,40 @@ export default function Home() {
           </div>
         )}
 
-        {/* Polling Creation Area */}
         {hasSearched && results.length > 0 && selectedForPoll.length > 0 && (
-          <div className="mb-8 p-4 bg-indigo-50 border border-osttra-indigo/20 rounded-md shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="mb-8 p-4 bg-arcade-panel border-2 border-arcade-accent neon-border-accent flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h3 className="font-bold text-osttra-indigo">Team Lunch Poll</h3>
-              <p className="text-sm text-gray-600">You've selected {selectedForPoll.length} of 3 restaurants.</p>
+              <h3 className="font-bold text-arcade-accent tracking-widest text-xl neon-text-accent">MULTIPLAYER CO-OP</h3>
+              <p className="text-sm text-arcade-text tracking-widest">TARGETS LOCKED: {selectedForPoll.length} / 3</p>
             </div>
             {pollLink ? (
               <div className="flex items-center gap-2 w-full md:w-auto">
-                <input type="text" readOnly value={pollLink} className="flex-1 md:w-64 px-3 py-2 text-sm border rounded-sm bg-white" />
-                <button onClick={() => navigator.clipboard.writeText(pollLink)} className="bg-osttra-indigo text-white px-4 py-2 text-sm font-bold rounded-sm">Copy</button>
+                <input type="text" readOnly value={pollLink} className="flex-1 md:w-64 px-3 py-2 text-sm border border-arcade-neon bg-black text-arcade-neon" />
+                <button onClick={() => navigator.clipboard.writeText(pollLink)} className="bg-arcade-neon text-black border-2 border-arcade-neon hover:bg-transparent hover:text-arcade-neon px-4 py-2 text-sm font-bold tracking-widest transition-colors">COPY_LINK</button>
               </div>
             ) : (
               <button 
                 onClick={createPoll}
                 disabled={pollCreating}
-                className="bg-osttra-indigo hover:bg-osttra-indigo-dark text-white font-bold py-2 px-6 rounded-sm shadow-md transition-colors disabled:opacity-50"
+                className="bg-arcade-accent text-black hover:bg-transparent hover:text-arcade-accent border-2 border-arcade-accent font-bold py-2 px-6 tracking-widest transition-colors disabled:opacity-50"
               >
-                {pollCreating ? "Creating..." : "Create Poll Link"}
+                {pollCreating ? "GENERATING..." : "INITIATE_POLL"}
               </button>
             )}
           </div>
         )}
 
         {hasSearched && !loading && !error && filteredAndSortedResults.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-lg border border-osttra-gray shadow-sm">
-            <h3 className="text-2xl font-bold text-osttra-indigo mb-2">No results found</h3>
-            <p className="text-gray-500 text-lg">We couldn't find any restaurants matching your search or filters nearby.</p>
+          <div className="text-center py-20 bg-arcade-panel border-2 border-arcade-accent neon-border-accent">
+            <h3 className="text-3xl font-bold text-arcade-accent mb-4 blink">0 TARGETS FOUND</h3>
+            <p className="text-arcade-text tracking-widest">ADJUST SCAN PARAMETERS AND RETRY.</p>
           </div>
         )}
 
-        {/* Results Rendering (List or Map) */}
         {hasSearched && filteredAndSortedResults.length > 0 && viewMode === 'map' && userLocation && (
-          <MapView userLocation={userLocation} restaurants={filteredAndSortedResults} />
+          <div className="border-4 border-arcade-neon neon-border p-1 bg-black">
+             <MapView userLocation={userLocation} restaurants={filteredAndSortedResults} />
+          </div>
         )}
 
         {hasSearched && filteredAndSortedResults.length > 0 && viewMode === 'list' && (
@@ -277,40 +272,38 @@ export default function Home() {
               const isSelected = selectedForPoll.includes(restaurant.id);
               
               return (
-                <div key={restaurant.id || idx} className={`group bg-white rounded-md shadow-sm border overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full relative ${isSelected ? 'border-osttra-indigo ring-2 ring-osttra-indigo/20' : 'border-osttra-gray'}`}>
+                <div key={restaurant.id || idx} className={`group bg-arcade-panel border-2 transition-all duration-300 flex flex-col h-full relative ${isSelected ? 'border-arcade-accent neon-border-accent scale-105 z-10' : 'border-arcade-neon hover:neon-border'}`}>
                   
-                  {/* Select for Poll Checkbox */}
-                  <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur rounded-sm p-1 shadow-md flex items-center justify-center cursor-pointer" onClick={() => togglePollSelection(restaurant.id)}>
-                    <div className={`w-6 h-6 border-2 flex items-center justify-center rounded-sm transition-colors ${isSelected ? 'border-osttra-indigo bg-osttra-indigo' : 'border-gray-400 bg-white'}`}>
-                      {isSelected && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  <div className="absolute top-4 left-4 z-10 bg-black border-2 border-arcade-neon p-1 cursor-pointer" onClick={() => togglePollSelection(restaurant.id)}>
+                    <div className={`w-6 h-6 flex items-center justify-center transition-colors ${isSelected ? 'bg-arcade-accent' : 'bg-black hover:bg-arcade-neon/30'}`}>
+                      {isSelected && <span className="text-black font-black text-xl leading-none">X</span>}
                     </div>
                   </div>
 
-                  <div className="h-56 bg-osttra-gray relative overflow-hidden">
+                  <div className="h-56 bg-black relative border-b-2 border-arcade-neon overflow-hidden">
                     {restaurant.imageUrl ? (
-                      <img src={restaurant.imageUrl} alt={restaurant.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img src={restaurant.imageUrl} alt={restaurant.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 font-medium bg-gray-100">Image Unavailable</div>
+                      <div className="w-full h-full flex items-center justify-center text-arcade-neon/50 font-bold tracking-widest text-sm bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(57,255,20,0.1)_10px,rgba(57,255,20,0.1)_20px)]">NO_VISUAL_DATA</div>
                     )}
-                    <div className="absolute bottom-0 left-0 w-full h-1 bg-osttra-rose"></div>
                     
                     {restaurant.rating && (
-                      <div className="absolute top-4 right-4 bg-white/95 text-osttra-indigo px-3 py-1 rounded-sm text-sm font-black flex items-center gap-1 shadow-md">
-                        ★ {restaurant.rating}
+                      <div className="absolute top-4 right-4 bg-black border border-arcade-neon text-arcade-neon px-2 py-1 text-sm font-black flex items-center gap-1">
+                        SCORE: {restaurant.rating}
                       </div>
                     )}
                   </div>
                   
                   <div className="p-6 flex flex-col flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight group-hover:text-osttra-rose transition-colors">{restaurant.name}</h3>
-                    <p className="text-gray-500 text-sm mb-6 flex-1 leading-relaxed">{restaurant.address}</p>
+                    <h3 className="text-xl font-bold text-arcade-neon mb-2 tracking-wider group-hover:neon-text">{restaurant.name}</h3>
+                    <p className="text-arcade-text/70 text-sm mb-6 flex-1 tracking-widest">{restaurant.address}</p>
                     
-                    <div className="flex justify-between items-center pt-4 border-t border-osttra-gray mb-4">
-                      <span className="text-osttra-indigo font-semibold text-sm bg-osttra-indigo/5 px-3 py-1.5 rounded-sm">
-                        {restaurant.distance} away
+                    <div className="flex justify-between items-center pt-4 border-t-2 border-arcade-neon/30 mb-6">
+                      <span className="text-arcade-accent font-bold text-sm tracking-widest">
+                        DST: {restaurant.distance}
                       </span>
                       {restaurant.priceLevel && (
-                        <span className="text-gray-400 font-bold tracking-widest">{restaurant.priceLevel}</span>
+                        <span className="text-arcade-neon font-bold tracking-widest bg-black px-2 border border-arcade-neon">LVL: {restaurant.priceLevel}</span>
                       )}
                     </div>
                     
@@ -319,9 +312,9 @@ export default function Home() {
                         href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${restaurant.lat},${restaurant.lng}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full text-center bg-osttra-light hover:bg-osttra-rose hover:text-white text-osttra-indigo font-semibold py-2 px-4 rounded-sm border border-osttra-gray hover:border-osttra-rose transition-colors"
+                        className="block w-full text-center bg-transparent hover:bg-arcade-neon hover:text-black text-arcade-neon font-bold py-3 border-2 border-arcade-neon tracking-widest transition-colors"
                       >
-                        Take me there 🧭
+                        [ NAVIGATE_ ]
                       </a>
                     )}
                   </div>
@@ -332,8 +325,8 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="bg-white border-t border-osttra-gray py-8 text-center text-gray-500 text-sm mt-auto">
-        <p>© {new Date().getFullYear()} triLunch by Osttra. Modern post-trade dining solutions.</p>
+      <footer className="relative z-10 border-t-2 border-arcade-neon bg-arcade-panel py-6 text-center text-arcade-neon/50 tracking-widest text-xs">
+        <p>© {new Date().getFullYear()} TRI_LUNCH SYS. v1.0. ALL RIGHTS RESERVED.</p>
       </footer>
     </div>
   );

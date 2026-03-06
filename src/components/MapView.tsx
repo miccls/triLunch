@@ -63,15 +63,15 @@ export default function MapView({
     setIsMounted(true);
   }, []);
 
-  if (!isMounted) return <div className="h-[500px] w-full bg-gray-100 animate-pulse rounded-md border border-osttra-gray flex items-center justify-center">Loading map...</div>;
+  if (!isMounted) return <div className="h-[500px] w-full bg-arcade-panel border-2 border-arcade-neon flex items-center justify-center neon-text blink tracking-widest font-mono">LOADING MAP_SYSTEM...</div>;
 
   return (
-    <div className="h-[600px] w-full rounded-md overflow-hidden border border-osttra-gray shadow-sm z-0 relative">
+    <div className="h-[600px] w-full overflow-hidden z-0 relative dark-map font-mono uppercase">
       <MapContainer 
         center={[userLocation.lat, userLocation.lng]} 
         zoom={14} 
         scrollWheelZoom={false} 
-        className="h-full w-full z-0"
+        className="h-full w-full z-0 bg-black"
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -80,7 +80,7 @@ export default function MapView({
         
         <Marker position={[userLocation.lat, userLocation.lng]} icon={UserIcon}>
           <Popup>
-            <div className="font-bold text-osttra-rose">You are here</div>
+            <div className="font-bold text-arcade-accent tracking-widest text-center">YOU ARE HERE</div>
           </Popup>
         </Marker>
 
@@ -88,17 +88,17 @@ export default function MapView({
           restaurant.lat && restaurant.lng && (
             <Marker key={restaurant.id || idx} position={[restaurant.lat, restaurant.lng]}>
               <Popup>
-                <div className="text-center w-48">
-                  <h3 className="font-bold text-osttra-indigo mb-1">{restaurant.name}</h3>
-                  <p className="text-xs text-gray-600 mb-2">{restaurant.address}</p>
-                  <p className="text-sm font-semibold mb-2">{restaurant.distance} away {restaurant.priceLevel && `• ${restaurant.priceLevel}`}</p>
+                <div className="text-center w-48 font-mono uppercase bg-black text-arcade-neon p-1">
+                  <h3 className="font-bold text-arcade-neon mb-1 tracking-widest">{restaurant.name}</h3>
+                  <p className="text-[10px] text-arcade-text mb-2 tracking-wider">{restaurant.address}</p>
+                  <p className="text-xs font-bold mb-2 text-arcade-accent">DST: {restaurant.distance} {restaurant.priceLevel && `• LVL: ${restaurant.priceLevel}`}</p>
                   <a 
                     href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${restaurant.lat},${restaurant.lng}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block bg-osttra-rose text-white px-3 py-1 rounded-sm text-xs font-bold w-full"
+                    className="inline-block bg-transparent border border-arcade-neon hover:bg-arcade-neon hover:text-black text-arcade-neon px-3 py-1 text-[10px] font-bold w-full tracking-widest transition-colors"
                   >
-                    Directions
+                    [ NAVIGATE_ ]
                   </a>
                 </div>
               </Popup>
