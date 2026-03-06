@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-osttra-rose: #FF0060;
-  --color-osttra-rose-hover: #E60056;
+  --color-accent-primary: #8B5CF6; /* Lowkey Violet */
+  --color-accent-hover: #7C3AED;
+  --color-accent-glow: rgba(139, 92, 246, 0.3);
   --color-osttra-indigo: #530074;
   --color-dark-bg: #0A0A0F;
   --color-dark-surface: #16161F;
@@ -12,7 +13,9 @@
 body {
   background-color: var(--color-dark-bg);
   color: #F3F4F6;
-  font-family: "Inter", "Montserrat", system-ui, -apple-system, sans-serif;
+  /* High-quality Monospaced Font Stack */
+  font-family: "JetBrains Mono", "Fira Code", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
+  letter-spacing: -0.02em;
 }
 
 /* Smooth glass effect */
@@ -23,8 +26,8 @@ body {
 }
 
 /* Subtle glowing accent */
-.glow-rose {
-  box-shadow: 0 0 20px rgba(255, 0, 96, 0.2);
+.glow-accent {
+  box-shadow: 0 0 25px var(--color-accent-glow);
 }
 
 /* Modern scrollbar */
@@ -44,8 +47,16 @@ body {
 
 /* Map Dark Mode Refined */
 .dark-map .leaflet-layer {
-  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  filter: invert(100%) hue-rotate(240deg) brightness(85%) contrast(90%);
 }
 .dark-map .leaflet-container {
   background: #0A0A0F !important;
+}
+
+/* Blink animation for that terminal feel */
+@keyframes blink {
+  50% { opacity: 0.5; }
+}
+.blink {
+  animation: blink 1.5s infinite;
 }
