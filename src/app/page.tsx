@@ -23,8 +23,14 @@ export default function Home() {
   const [selectedForPoll, setSelectedForPoll] = useState<string[]>([]);
   const [pollCreating, setPollCreating] = useState(false);
   const [pollLink, setPollLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  const handleSearch = (isLucky: boolean = false) => {
+  const handleCopy = () => {
+    if (!pollLink) return;
+    navigator.clipboard.writeText(pollLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
     if (!isLucky && !query) return;
     
     setLoading(true);
@@ -216,8 +222,17 @@ export default function Home() {
             </div>
             {pollLink ? (
               <div className="flex items-center gap-2 w-full md:w-auto">
-                <input type="text" readOnly value={pollLink} className="flex-1 md:w-80 px-4 py-3 text-xs border border-white/5 rounded-xl bg-black/40 text-accent-primary" />
-                <button onClick={() => navigator.clipboard.writeText(pollLink)} className="bg-white text-black hover:bg-gray-200 px-6 py-3 text-xs font-bold rounded-xl transition-all uppercase tracking-[0.2em]">Copy_URL</button>
+                <input type="text" readOnly value={pollLink} className="flex-1 md:w-80 px-4 py-3 text-xs border border-white/5 rounded-xl bg-black/40 text-accent-primary focus:outline-none" />
+                <button 
+                  onClick={handleCopy} 
+                  className={`min-w-[120px] px-6 py-3 text-xs font-bold rounded-xl transition-all uppercase tracking-[0.2em] shadow-lg ${
+                    copied 
+                    ? 'bg-green-500 text-white scale-95 shadow-green-500/20' 
+                    : 'bg-white text-black hover:bg-gray-200 active:scale-95'
+                  }`}
+                >
+                  {copied ? 'Copied!' : 'Copy_URL'}
+                </button>
               </div>
             ) : (
               <button 
