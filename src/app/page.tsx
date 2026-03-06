@@ -31,6 +31,8 @@ export default function Home() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleSearch = (isLucky: boolean = false) => {
     if (!isLucky && !query) return;
     
     setLoading(true);
