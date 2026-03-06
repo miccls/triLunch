@@ -1,5 +1,11 @@
-import { kv } from '@vercel/kv';
+import Redis from 'ioredis';
 
-// We'll use the 'kv' object directly in our routes now. 
-// This file can stay as a central point of configuration if needed.
+const globalForRedis = global as unknown as { redis: Redis | undefined };
+
+export const redis = globalForRedis.redis ?? new Redis(process.env.REDIS_URL || '');
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForRedis.redis = redis;
+}
+
 export const POLL_EXPIRY = 60 * 60 * 24; // 24 hours in seconds

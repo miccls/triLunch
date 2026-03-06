@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
-import { POLL_EXPIRY } from '@/lib/pollsStore';
+import { redis, POLL_EXPIRY } from '@/lib/pollsStore';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -8,24 +7,24 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const body = await request.json();
     const { restaurantId } = body;
 
-    // Get the poll from persistent store
-    const poll: any = await kv.get(`poll:${id}`);
-
-    if (!poll) {
+    // Get the poll from standard Redis
+    const rawData = await redis.get(`poll:${id}`);
+    if (!rawData) {
       return NextResponse.json({ error: 'Poll not found' }, { status: 404 });
     }
+
+    const poll = JSON.parse(rawData);
 
     const optionIndex = poll.options.findIndex((o: any) => o.id === restaurantId);
     if (optionIndex === -1) {
       return NextResponse.json({ error: 'Restaurant not found in poll' }, { status: 400 });
     }
 
-    // Update the vote count in the data object
+    // Update the vote count
     poll.options[optionIndex].votes += 1;
 
-    // Save the updated poll back to the persistent store
-    // Also reset the 24-hour expiration so a poll stays active while people are still using it
-    await kv.set(`poll:${id}`, poll, { ex: POLL_EXPIRY });
+    // Save back to Redis
+    await redis.set(`poll:${id}`, JSON.stringify(poll), 'EX', POLL_EXPIRY);
 
     return NextResponse.json({ success: true, poll });
   } catch (error) {
@@ -37,13 +36,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const poll = await kv.get(`poll:${id}`);
+    const rawData = await redis.get(`poll:${id}`);
     
-    if (!poll) {
+    if (!rawData) {
       return NextResponse.json({ error: 'Poll not found' }, { status: 404 });
     }
 
-    return NextResponse.json(poll);
+    return NextResponse.json(JSON.parse(rawData));
   } catch (error) {
     console.error('Error fetching poll:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

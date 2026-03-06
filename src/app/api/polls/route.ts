@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
-import { POLL_EXPIRY } from '@/lib/pollsStore';
+import { redis, POLL_EXPIRY } from '@/lib/pollsStore';
 
 export async function POST(request: Request) {
   try {
@@ -26,8 +25,8 @@ export async function POST(request: Request) {
       options: options
     };
 
-    // Use KV to store the poll persistently, with an automatic 24-hour expiration
-    await kv.set(`poll:${pollId}`, pollData, { ex: POLL_EXPIRY });
+    // Store the poll persistently using standard Redis client
+    await redis.set(`poll:${pollId}`, JSON.stringify(pollData), 'EX', POLL_EXPIRY);
 
     return NextResponse.json({ id: pollId });
   } catch (error) {
