@@ -1,21 +1,36 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+
+type PlacesResponse = {
+  places?: Array<{
+    name?: string;
+    displayName?: { text?: string };
+    formattedAddress?: string;
+    rating?: number;
+    priceLevel?: string;
+    photos?: Array<{ name: string }>;
+    location?: {
+      latitude?: number;
+      longitude?: number;
+    };
+  }>;
+};
 
 export async function POST(request: Request) {
   try {
     const { query, lat, lng } = await request.json();
 
-    if (!query || !lat || !lng) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    if (!query || typeof lat !== "number" || typeof lng !== "number") {
+      return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
 
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
     if (!apiKey) {
-      console.error('Google Places API Key is missing');
-      return NextResponse.json({ error: 'Google Places API Key is missing' }, { status: 500 });
+      console.error("Google Places API Key is missing");
+      return NextResponse.json({ error: "Google Places API Key is missing" }, { status: 500 });
     }
 
-    const url = 'https://places.googleapis.com/v1/places:searchText';
+    const url = "https://places.googleapis.com/v1/places:searchText";
     
     // Configure location bias to roughly 5 kilometers around the user's coordinates
     const requestBody = {
@@ -34,12 +49,12 @@ export async function POST(request: Request) {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': apiKey,
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
         // Request exactly what we need for the UI to keep payload size down
-        'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.photos,places.location'
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.photos,places.location",
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -48,24 +63,24 @@ export async function POST(request: Request) {
       throw new Error(`Google API responded with status ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as PlacesResponse;
     const places = data.places || [];
 
     const formatPriceLevel = (level: string) => {
       switch (level) {
-        case 'PRICE_LEVEL_INEXPENSIVE': return '$';
-        case 'PRICE_LEVEL_MODERATE': return '$$';
-        case 'PRICE_LEVEL_EXPENSIVE': return '$$$';
-        case 'PRICE_LEVEL_VERY_EXPENSIVE': return '$$$$';
+        case "PRICE_LEVEL_INEXPENSIVE": return "$";
+        case "PRICE_LEVEL_MODERATE": return "$$";
+        case "PRICE_LEVEL_EXPENSIVE": return "$$$";
+        case "PRICE_LEVEL_VERY_EXPENSIVE": return "$$$$";
         default: return null;
       }
     };
 
-    const restaurants = places.map((place: any) => {
+    const restaurants = places.map((place) => {
       // Calculate distance from user to place using haversine formula
       let distanceStr = "Unknown";
       let distanceRaw = 999;
-      if (place.location) {
+      if (typeof place.location?.latitude === "number" && typeof place.location?.longitude === "number") {
         distanceRaw = parseFloat(getDistanceInMiles(lat, lng, place.location.latitude, place.location.longitude));
         distanceStr = `${distanceRaw} mi`;
       }
@@ -80,22 +95,22 @@ export async function POST(request: Request) {
 
       return {
         id: place.name || Math.random().toString(), // Use place.name which is the unique resource name in Places API
-        name: place.displayName?.text || 'Unknown Restaurant',
-        address: place.formattedAddress || 'Unknown Address',
+        name: place.displayName?.text || "Unknown Restaurant",
+        address: place.formattedAddress || "Unknown Address",
         rating: place.rating || null,
         distance: distanceStr,
         distanceRaw: distanceRaw,
         lat: place.location?.latitude || null,
         lng: place.location?.longitude || null,
-        priceLevel: formatPriceLevel(place.priceLevel),
+        priceLevel: place.priceLevel ? formatPriceLevel(place.priceLevel) : null,
         imageUrl: imageUrl,
       };
     });
 
     return NextResponse.json({ restaurants });
   } catch (error) {
-    console.error('Search API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("Search API Error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -25,8 +25,18 @@ const UserIcon = L.icon({
   shadowSize: [41, 41]
 });
 
+type MapRestaurant = {
+  id: string;
+  name: string;
+  address: string;
+  distance: string;
+  priceLevel: string | null;
+  lat: number | null;
+  lng: number | null;
+};
+
 // Helper component to adjust map bounds to fit all markers
-function MapBounds({ userLocation, restaurants }: { userLocation: {lat: number, lng: number}, restaurants: any[] }) {
+function MapBounds({ userLocation, restaurants }: { userLocation: {lat: number, lng: number}, restaurants: MapRestaurant[] }) {
   const map = useMap();
   
   useEffect(() => {
@@ -55,16 +65,8 @@ export default function MapView({
   restaurants 
 }: { 
   userLocation: {lat: number, lng: number}, 
-  restaurants: any[] 
+  restaurants: MapRestaurant[] 
 }) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) return <div className="h-[500px] w-full bg-dark-surface border border-dark-border flex items-center justify-center text-gray-400 animate-pulse tracking-widest font-mono uppercase text-xs">Initializing Radar_Scan...</div>;
-
   return (
     <div className="h-[600px] w-full overflow-hidden z-0 relative dark-map font-mono uppercase text-[10px]">
       <MapContainer 
