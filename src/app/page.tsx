@@ -135,8 +135,9 @@ export default function Home() {
         </div>
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-gray-500 lowercase">
-            tri_<span className="text-accent-primary">lunch</span>
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-4 lowercase">
+            <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-gray-500">tri_</span>
+            <span className="bg-gradient-to-r from-[#ff6747] to-[#f01eb0] text-transparent bg-clip-text">lunch</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-400 font-light mb-12 max-w-2xl mx-auto leading-relaxed tracking-tight">
             &gt; Discovering optimal dining nodes.
@@ -155,7 +156,7 @@ export default function Home() {
               <button
                 onClick={() => handleSearch(false)}
                 disabled={loading}
-                className="bg-accent-primary hover:bg-accent-hover text-white font-bold text-sm py-4 px-10 rounded-xl transition-all glow-accent disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center uppercase tracking-[0.2em]"
+                className="bg-gradient-to-r from-[#ff6747] to-[#f01eb0] hover:brightness-110 text-white font-bold text-sm py-4 px-10 rounded-xl transition-all glow-accent disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center uppercase tracking-[0.2em]"
               >
                 {loading ? "SEARCHING..." : "EXECUTE"}
               </button>
@@ -240,7 +241,7 @@ export default function Home() {
               <button 
                 onClick={createPoll}
                 disabled={pollCreating}
-                className="bg-accent-primary hover:bg-accent-hover text-white font-bold py-3 px-8 rounded-xl transition-all glow-accent disabled:opacity-50 uppercase text-xs tracking-[0.2em]"
+                className="bg-gradient-to-r from-[#ff6747] to-[#f01eb0] hover:brightness-110 text-white font-bold py-3 px-8 rounded-xl transition-all glow-accent disabled:opacity-50 uppercase text-xs tracking-[0.2em]"
               >
                 {pollCreating ? "INITIALIZING..." : "Create_Session"}
               </button>

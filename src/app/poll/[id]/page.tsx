@@ -67,11 +67,16 @@ export default function PollPage() {
       <div className="absolute inset-0 z-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(139,92,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.1)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
 
       <header className="relative z-10 py-16 px-6 text-center border-b border-dark-border bg-gradient-to-b from-dark-surface to-dark-bg">
+        <div className="absolute top-6 left-6 z-20">
+          <a href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 hover:text-white hover:border-white/30 hover:bg-black/60 transition-all backdrop-blur-md">
+            &lt; Return_To_Base
+          </a>
+        </div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none opacity-20">
           <div className="absolute top-[-50%] left-[-20%] w-[150%] h-[200%] bg-gradient-to-br from-accent-primary/20 via-transparent to-transparent blur-[150px]" />
         </div>
         <h1 className="text-3xl md:text-5xl font-black tracking-tighter mb-4 lowercase relative z-10">
-          tri_<span className="text-accent-primary">poll</span>
+          tri_<span className="bg-gradient-to-r from-[#ff6747] to-[#f01eb0] text-transparent bg-clip-text">poll</span>
         </h1>
         <p className="text-xs text-gray-500 tracking-[0.2em] relative z-10">&gt; Mission_Context: "{poll.query}"</p>
       </header>
@@ -122,7 +127,7 @@ export default function PollPage() {
                       className={`w-full md:w-40 py-3 font-bold text-[10px] tracking-[0.2em] border rounded-xl transition-all uppercase
                         ${hasVoted 
                           ? 'bg-transparent text-gray-700 border-white/5 cursor-not-allowed' 
-                          : 'bg-accent-primary text-white border-accent-primary hover:bg-accent-hover hover:glow-accent'
+                          : 'bg-gradient-to-r from-[#ff6747] to-[#f01eb0] border-transparent text-white hover:brightness-110 hover:glow-accent'
                         }
                       `}
                     >

@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-accent-primary: #8B5CF6; /* Lowkey Violet */
-  --color-accent-hover: #7C3AED;
-  --color-accent-glow: rgba(139, 92, 246, 0.3);
+  --color-accent-primary: #f01eb0; /* Pink fallback */
+  --color-accent-hover: #d0189a;
+  --color-accent-glow: rgba(240, 30, 176, 0.3);
   --color-osttra-indigo: #530074;
   --color-dark-bg: #0A0A0F;
   --color-dark-surface: #16161F;
