@@ -303,12 +303,15 @@ export default function Home() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "UPDATE_FAILED");
+      if (!res.ok) {
+        throw new Error(data.error || `Error_${res.status}: Failed to commit update.`);
+      }
 
       setCurrentUser(data.user);
       setEditingAvatar(false);
     } catch (err) {
-      alert("Failed to update profile picture.");
+      const message = err instanceof Error ? err.message : "NETWORK_FAILURE";
+      alert(`! UPDATE_ERROR: ${message}`);
     } finally {
       setUpdateLoading(false);
     }
