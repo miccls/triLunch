@@ -10,6 +10,20 @@ type Invitee = {
   avatarUrl: string | null;
 };
 
+type SessionUser = {
+  id: string;
+  email: string;
+  username: string;
+  avatarUrl: string | null;
+};
+
+type SearchUser = {
+  id: string;
+  username: string;
+  avatarUrl: string | null;
+  email: string;
+};
+
 type PollOption = {
   id: string;
   name: string;
@@ -24,10 +38,12 @@ type PollOption = {
 type Poll = {
   id: string;
   query: string;
+  ownerUserId: string | null;
   ownerUsername: string | null;
   ownerAvatarUrl: string | null;
   invitees: Invitee[];
   options: PollOption[];
+  votedUserIds?: string[];
 };
 
 function initials(username: string) {
@@ -43,6 +59,24 @@ export default function PollPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [votingFor, setVotingFor] = useState<string | null>(null);
+
+  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteResults, setInviteResults] = useState<SearchUser[]>([]);
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const res = await fetch("/api/auth/session", { cache: "no-store" });
+        const data = await res.json();
+        setCurrentUser(data.user);
+      } catch (err) {
+        console.error("Failed to load session", err);
+      }
+    };
+    fetchSession();
+  }, []);
 
   useEffect(() => {
     if (!pollId) return;
@@ -65,7 +99,51 @@ export default function PollPage() {
     return () => clearInterval(interval);
   }, [pollId]);
 
+  useEffect(() => {
+    if (poll && currentUser && poll.votedUserIds?.includes(currentUser.id)) {
+      setHasVoted(true);
+    }
+  }, [poll, currentUser]);
+
+  useEffect(() => {
+    if (!currentUser || inviteQuery.trim().length < 2) {
+      setInviteResults([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      try {
+        setInviteLoading(true);
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(inviteQuery)}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+
+        if (!res.ok) throw new Error("SEARCH_FAILED");
+
+        const data = await res.json();
+        setInviteResults(data.users ?? []);
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          setInviteResults([]);
+        }
+      } finally {
+        setInviteLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [currentUser, inviteQuery]);
+
   const handleVote = async (restaurantId: string) => {
+    if (!currentUser) {
+      alert("You must log in to vote.");
+      return;
+    }
     if (hasVoted) return;
     setVotingFor(restaurantId);
 
@@ -76,15 +154,34 @@ export default function PollPage() {
         body: JSON.stringify({ restaurantId }),
       });
 
-      if (!res.ok) throw new Error("ERR_500: Vote registration failed.");
-
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "ERR_500: Vote registration failed.");
+
       setPoll(data.poll);
       setHasVoted(true);
-    } catch {
-      alert("System Error: Could not commit score.");
+    } catch (err) {
+      alert(`System Error: ${(err as Error).message}`);
     } finally {
       setVotingFor(null);
+    }
+  };
+
+  const handleInviteUser = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/polls/${pollId}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to invite user");
+
+      setPoll(data.poll);
+      setInviteQuery("");
+      setInviteResults([]);
+    } catch (err) {
+      alert(`System Error: ${(err as Error).message}`);
     }
   };
 
@@ -181,6 +278,62 @@ export default function PollPage() {
                     {invitee.username}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {currentUser?.id === poll.ownerUserId && (
+            <div className="mb-8 rounded-2xl border border-white/5 bg-black/20 p-5">
+              <h3 className="text-xs font-bold text-white tracking-[0.2em] uppercase mb-4">Add Crew Members</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  value={inviteQuery}
+                  onChange={(event) => setInviteQuery(event.target.value)}
+                  placeholder="SEARCH_USERS"
+                  className="w-full px-4 py-3 bg-black/40 text-white rounded-xl border border-white/5 focus:outline-none focus:ring-1 focus:ring-accent-primary/50 text-xs uppercase tracking-widest placeholder-gray-600"
+                />
+
+                <div className="space-y-2">
+                  {inviteLoading && (
+                    <div className="text-[10px] tracking-[0.15em] text-gray-500 uppercase">Scanning user graph...</div>
+                  )}
+
+                  {!inviteLoading &&
+                    inviteQuery.trim().length >= 2 &&
+                    inviteResults.filter((user) => !poll.invitees.some((invitee) => invitee.userId === user.id)).length === 0 && (
+                      <div className="text-[10px] tracking-[0.15em] text-gray-500 uppercase">No new personnel found.</div>
+                    )}
+
+                  {inviteResults
+                    .filter((user) => !poll.invitees.some((invitee) => invitee.userId === user.id))
+                    .map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/40 hover:bg-black/60 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center text-[10px] font-black text-accent-primary shrink-0">
+                            {user.avatarUrl ? (
+                              <img src={user.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
+                            ) : (
+                              initials(user.username)
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-white tracking-widest">{user.username}</div>
+                            <div className="text-[10px] text-gray-500 tracking-[0.15em] lowercase">{user.email}</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleInviteUser(user.id)}
+                          className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] font-bold tracking-[0.2em] uppercase transition-colors"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    ))}
+                </div>
               </div>
             </div>
           )}

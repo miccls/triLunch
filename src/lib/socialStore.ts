@@ -41,6 +41,7 @@ export type PollRecord = {
   ownerAvatarUrl: string | null;
   invitees: InviteeSummary[];
   options: PollOption[];
+  votedUserIds?: string[];
 };
 
 type PollCreateInput = {
@@ -245,6 +246,7 @@ export async function createPollRecord(input: PollCreateInput) {
     ownerAvatarUrl: input.owner?.avatarUrl ?? null,
     invitees: input.invitees,
     options,
+    votedUserIds: [],
   };
 
   return pollData;
