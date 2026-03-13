@@ -30,6 +30,8 @@ type PollOption = {
   address: string;
   rating: number | null;
   distance: string;
+  lat: number | null;
+  lng: number | null;
   priceLevel: string | null;
   imageUrl: string | null;
   votes: number;
@@ -386,9 +388,19 @@ export default function PollPage() {
                       )}
                     </div>
                     <p className="text-gray-600 text-[10px] mb-2 tracking-widest lowercase line-clamp-1">{option.address}</p>
-                    <p className="text-[9px] font-bold text-accent-primary tracking-[0.2em]">
-                      Dist: {option.distance} {option.priceLevel && `• Cost: ${option.priceLevel}`}
-                    </p>
+                    <div className="flex flex-col md:flex-row items-center gap-3">
+                      <p className="text-[9px] font-bold text-accent-primary tracking-[0.2em]">
+                        Dist: {option.distance} {option.priceLevel && `• Cost: ${option.priceLevel}`}
+                      </p>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(option.address)}${option.lat && option.lng ? `&destination_place_id=${option.id}&ll=${option.lat},${option.lng}` : ""}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[8px] font-black text-white/40 hover:text-accent-primary transition-colors tracking-widest uppercase flex items-center gap-1 border border-white/5 hover:border-accent-primary/30 px-2 py-1 rounded-lg bg-black/20"
+                      >
+                        Navigate_&gt;
+                      </a>
+                    </div>
                   </div>
 
                   <div className="flex flex-col items-center gap-4 z-10 w-full md:w-auto">
