@@ -25,9 +25,14 @@ type Poll = {
   id: string;
   query: string;
   ownerUsername: string | null;
+  ownerAvatarUrl: string | null;
   invitees: Invitee[];
   options: PollOption[];
 };
+
+function initials(username: string) {
+  return username.slice(0, 2).toUpperCase();
+}
 
 export default function PollPage() {
   const params = useParams();
@@ -138,9 +143,18 @@ export default function PollPage() {
                 <span className="bg-black/40 border border-white/10 text-accent-primary px-4 py-2 rounded-xl">
                   Global_Score: {totalVotes}
                 </span>
-                <span className="bg-black/30 border border-white/5 text-gray-400 px-4 py-2 rounded-xl">
-                  Host: {poll.ownerUsername || "anonymous"}
-                </span>
+                <div className="flex items-center gap-3 bg-black/30 border border-white/5 text-gray-400 px-4 py-2 rounded-xl">
+                  <div className="w-6 h-6 rounded-lg border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center text-[8px] font-black text-accent-primary shrink-0">
+                    {poll.ownerAvatarUrl ? (
+                      <img src={poll.ownerAvatarUrl} alt={poll.ownerUsername || ""} className="w-full h-full object-cover" />
+                    ) : (
+                      initials(poll.ownerUsername || "??")
+                    )}
+                  </div>
+                  <span className="text-[10px] tracking-[0.15em] uppercase">
+                    Host: {poll.ownerUsername || "anonymous"}
+                  </span>
+                </div>
                 <span className="bg-black/30 border border-white/5 text-gray-400 px-4 py-2 rounded-xl">
                   Invited: {poll.invitees.length}
                 </span>
@@ -155,8 +169,15 @@ export default function PollPage() {
                 {poll.invitees.map((invitee) => (
                   <div
                     key={invitee.userId}
-                    className="px-4 py-2 rounded-xl border border-white/5 bg-black/40 text-[10px] tracking-[0.15em] uppercase text-gray-300"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-black/40 text-[10px] tracking-[0.15em] uppercase text-gray-300"
                   >
+                    <div className="w-5 h-5 rounded-md border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center text-[6px] font-black text-accent-primary shrink-0">
+                      {invitee.avatarUrl ? (
+                        <img src={invitee.avatarUrl} alt={invitee.username} className="w-full h-full object-cover" />
+                      ) : (
+                        initials(invitee.username)
+                      )}
+                    </div>
                     {invitee.username}
                   </div>
                 ))}

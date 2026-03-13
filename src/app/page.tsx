@@ -76,6 +76,9 @@ export default function Home() {
   const [authUsername, setAuthUsername] = useState("");
   const [authAvatarUrl, setAuthAvatarUrl] = useState("");
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
+  const [editingAvatar, setEditingAvatar] = useState(false);
+  const [newAvatarUrl, setNewAvatarUrl] = useState("");
+  const [updateLoading, setUpdateLoading] = useState(false);
 
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -288,6 +291,29 @@ export default function Home() {
     }
   };
 
+  const handleUpdateAvatar = async () => {
+    if (!currentUser) return;
+    setUpdateLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: newAvatarUrl }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "UPDATE_FAILED");
+
+      setCurrentUser(data.user);
+      setEditingAvatar(false);
+    } catch (err) {
+      alert("Failed to update profile picture.");
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setCurrentUser(null);
@@ -337,19 +363,56 @@ export default function Home() {
               ) : currentUser ? (
                 <div className="space-y-5">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center text-sm font-black text-accent-primary">
+                    <div className="w-14 h-14 rounded-2xl border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center text-sm font-black text-accent-primary relative group">
                       {currentUser.avatarUrl ? (
                         <img src={currentUser.avatarUrl} alt={currentUser.username} className="w-full h-full object-cover" />
                       ) : (
                         initials(currentUser.username)
                       )}
+                      <button 
+                        onClick={() => {
+                          setEditingAvatar(!editingAvatar);
+                          setNewAvatarUrl(currentUser.avatarUrl || "");
+                        }}
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] tracking-tighter uppercase font-bold"
+                      >
+                        Edit
+                      </button>
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <div className="text-[10px] tracking-[0.25em] uppercase text-gray-500">Identity active</div>
                       <div className="text-lg font-bold text-white">{currentUser.username}</div>
                       <div className="text-[10px] tracking-[0.15em] text-gray-500 lowercase">{currentUser.email}</div>
                     </div>
                   </div>
+
+                  {editingAvatar && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <input
+                        type="url"
+                        placeholder="NEW_AVATAR_URL"
+                        className="w-full px-4 py-2 bg-black/40 text-white rounded-xl border border-white/5 focus:outline-none focus:ring-1 focus:ring-accent-primary/50 text-[10px] uppercase tracking-widest placeholder-gray-600"
+                        value={newAvatarUrl}
+                        onChange={(e) => setNewAvatarUrl(e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleUpdateAvatar}
+                          disabled={updateLoading}
+                          className="flex-1 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-widest"
+                        >
+                          {updateLoading ? "Syncing..." : "Update"}
+                        </button>
+                        <button
+                          onClick={() => setEditingAvatar(false)}
+                          className="px-4 py-2 text-gray-500 hover:text-white text-[10px] font-bold transition-all uppercase tracking-widest"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="rounded-2xl border border-white/5 bg-black/30 p-4 text-[10px] tracking-[0.15em] text-gray-400 uppercase">
                     Friend search is enabled for this session. Invites are stored on newly created polls.
                   </div>
@@ -584,8 +647,15 @@ export default function Home() {
                         <button
                           key={invitee.id}
                           onClick={() => toggleInvitee(invitee)}
-                          className="px-3 py-2 rounded-xl border border-accent-primary/20 bg-accent-primary/10 text-[10px] tracking-[0.15em] uppercase text-white"
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-accent-primary/20 bg-accent-primary/10 text-[10px] tracking-[0.15em] uppercase text-white hover:bg-accent-primary/20 transition-all"
                         >
+                          <div className="w-5 h-5 rounded-md border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center text-[6px] font-black text-accent-primary shrink-0">
+                            {invitee.avatarUrl ? (
+                              <img src={invitee.avatarUrl} alt={invitee.username} className="w-full h-full object-cover" />
+                            ) : (
+                              initials(invitee.username)
+                            )}
+                          </div>
                           {invitee.username} ×
                         </button>
                       ))}

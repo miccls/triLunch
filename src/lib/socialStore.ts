@@ -38,6 +38,7 @@ export type PollRecord = {
   createdAt: string;
   ownerUserId: string | null;
   ownerUsername: string | null;
+  ownerAvatarUrl: string | null;
   invitees: InviteeSummary[];
   options: PollOption[];
 };
@@ -134,6 +135,21 @@ export async function getUserById(userId: string) {
   return raw ? (JSON.parse(raw) as UserRecord) : null;
 }
 
+export async function updateUser(userId: string, updates: Partial<UserRecord>) {
+  const existing = await getUserById(userId);
+  if (!existing) {
+    throw new Error("USER_NOT_FOUND");
+  }
+
+  const updated: UserRecord = {
+    ...existing,
+    ...updates,
+  };
+
+  await redis.set(userKey(userId), JSON.stringify(updated));
+  return updated;
+}
+
 export async function getUserByEmail(email: string) {
   const emailNormalized = normalizeEmail(email);
   const userId = await redis.get(userEmailKey(emailNormalized));
@@ -226,6 +242,7 @@ export async function createPollRecord(input: PollCreateInput) {
     createdAt: new Date().toISOString(),
     ownerUserId: input.owner?.id ?? null,
     ownerUsername: input.owner?.username ?? null,
+    ownerAvatarUrl: input.owner?.avatarUrl ?? null,
     invitees: input.invitees,
     options,
   };
