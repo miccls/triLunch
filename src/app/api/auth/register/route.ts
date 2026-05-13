@@ -18,6 +18,9 @@ export async function POST(request: Request) {
         email: user.email,
         username: user.username,
         avatarUrl: user.avatarUrl,
+        address: user.address,
+        lat: user.lat,
+        lng: user.lng,
       },
     });
 

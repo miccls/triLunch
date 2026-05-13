@@ -8,7 +8,9 @@ export type UserRecord = {
   username: string;
   usernameNormalized: string;
   avatarUrl: string | null;
-  officeAddress: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
   createdAt: string;
 };
 
@@ -117,7 +119,9 @@ export async function createUser(input: {
     username: input.username.trim(),
     usernameNormalized,
     avatarUrl: input.avatarUrl?.trim() || null,
-    officeAddress: null,
+    address: null,
+    lat: null,
+    lng: null,
     createdAt: new Date().toISOString(),
   };
 
@@ -202,6 +206,9 @@ export async function searchUsers(query: string, excludeUserId?: string) {
       username: user.username,
       avatarUrl: user.avatarUrl,
       email: user.email,
+      address: user.address,
+      lat: user.lat,
+      lng: user.lng,
     }));
 }
 

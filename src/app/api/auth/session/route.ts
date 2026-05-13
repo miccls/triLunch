@@ -11,6 +11,9 @@ export async function GET() {
           email: user.email,
           username: user.username,
           avatarUrl: user.avatarUrl,
+          address: user.address,
+          lat: user.lat,
+          lng: user.lng,
         }
       : null,
   });

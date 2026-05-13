@@ -21,6 +21,9 @@ type SessionUser = {
   email: string;
   username: string;
   avatarUrl: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 type SearchUser = {
@@ -28,6 +31,9 @@ type SearchUser = {
   username: string;
   avatarUrl: string | null;
   email: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -76,9 +82,13 @@ export default function Home() {
   const [authUsername, setAuthUsername] = useState("");
   const [authAvatarUrl, setAuthAvatarUrl] = useState("");
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
-  const [editingAvatar, setEditingAvatar] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
   const [newAvatarUrl, setNewAvatarUrl] = useState("");
+  const [newAddress, setNewAddress] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
+
+  const [locationMode, setLocationMode] = useState<"device" | "address" | "midpoint">("device");
+  const [customAddress, setCustomAddress] = useState("");
 
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -144,7 +154,7 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSearch = (isLucky = false) => {
+  const handleSearch = async (isLucky = false) => {
     if (!isLucky && !query) return;
 
     setLoading(true);
@@ -154,50 +164,89 @@ export default function Home() {
     setSelectedForPoll([]);
     setPollLink(null);
 
-    if (!navigator.geolocation) {
-      setError("ERR_01: Location module unavailable.");
-      setLoading(false);
-      return;
-    }
+    const executeSearch = async (lat: number, lng: number) => {
+      setUserLocation({ lat, lng });
+      try {
+        const searchQuery = !query && isLucky ? "lunch" : query;
+        const res = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: searchQuery, lat, lng }),
+        });
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        setUserLocation({ lat, lng });
+        if (!res.ok) throw new Error("ERR_02: Target connection failed.");
+        const data = await res.json();
+        const fetchedResults = (data.restaurants || []) as Restaurant[];
 
-        try {
-          const searchQuery = !query && isLucky ? "lunch" : query;
-          const res = await fetch("/api/search", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query: searchQuery, lat, lng }),
-          });
-
-          if (!res.ok) throw new Error("ERR_02: Target connection failed.");
-          const data = await res.json();
-          const fetchedResults = (data.restaurants || []) as Restaurant[];
-
-          if (isLucky && fetchedResults.length > 0) {
-            const highlyRated = fetchedResults.filter((restaurant) => (restaurant.rating || 0) >= 4.0);
-            const pool = highlyRated.length > 0 ? highlyRated : fetchedResults;
-            const randomChoice = pool[Math.floor(Math.random() * pool.length)];
-            setResults([randomChoice]);
-            setViewMode("list");
-          } else {
-            setResults(fetchedResults);
-          }
-        } catch (err) {
-          setError((err as Error).message || "ERR_03: Unexpected system exception.");
-        } finally {
-          setLoading(false);
+        if (isLucky && fetchedResults.length > 0) {
+          const highlyRated = fetchedResults.filter((restaurant) => (restaurant.rating || 0) >= 4.0);
+          const pool = highlyRated.length > 0 ? highlyRated : fetchedResults;
+          const randomChoice = pool[Math.floor(Math.random() * pool.length)];
+          setResults([randomChoice]);
+          setViewMode("list");
+        } else {
+          setResults(fetchedResults);
         }
-      },
-      () => {
-        setError("ERR_04: Access to position denied.");
+      } catch (err) {
+        setError((err as Error).message || "ERR_03: Unexpected system exception.");
+      } finally {
         setLoading(false);
-      },
-    );
+      }
+    };
+
+    if (locationMode === "address") {
+      if (!customAddress) {
+        setError("ERR_ADDR: Please provide a target address.");
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch("/api/geocode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: customAddress }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Geocoding failed");
+        await executeSearch(data.lat, data.lng);
+      } catch (err) {
+        setError((err as Error).message);
+        setLoading(false);
+      }
+    } else if (locationMode === "midpoint") {
+      const coords = [];
+      if (currentUser?.lat && currentUser?.lng) {
+        coords.push({ lat: currentUser.lat, lng: currentUser.lng });
+      }
+      selectedInvitees.forEach(u => {
+        if (u.lat && u.lng) coords.push({ lat: u.lat, lng: u.lng });
+      });
+
+      if (coords.length === 0) {
+        setError("ERR_MID: No valid addresses found for midpoint calculation.");
+        setLoading(false);
+        return;
+      }
+
+      const avgLat = coords.reduce((sum, c) => sum + c.lat, 0) / coords.length;
+      const avgLng = coords.reduce((sum, c) => sum + c.lng, 0) / coords.length;
+      await executeSearch(avgLat, avgLng);
+    } else {
+      // Device Geolocation
+      if (!navigator.geolocation) {
+        setError("ERR_01: Location module unavailable.");
+        setLoading(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => executeSearch(position.coords.latitude, position.coords.longitude),
+        () => {
+          setError("ERR_04: Access to position denied.");
+          setLoading(false);
+        },
+      );
+    }
   };
 
   const togglePollSelection = (restaurantId: string) => {
@@ -291,7 +340,7 @@ export default function Home() {
     }
   };
 
-  const handleUpdateAvatar = async () => {
+  const handleUpdateProfile = async () => {
     if (!currentUser) return;
     setUpdateLoading(true);
 
@@ -299,7 +348,7 @@ export default function Home() {
       const res = await fetch("/api/auth/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatarUrl: newAvatarUrl }),
+        body: JSON.stringify({ avatarUrl: newAvatarUrl, address: newAddress }),
       });
 
       const data = await res.json();
@@ -308,7 +357,7 @@ export default function Home() {
       }
 
       setCurrentUser(data.user);
-      setEditingAvatar(false);
+      setEditingProfile(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "NETWORK_FAILURE";
       alert(`! UPDATE_ERROR: ${message}`);
@@ -372,25 +421,29 @@ export default function Home() {
                       ) : (
                         initials(currentUser.username)
                       )}
-                      <button 
+                      <button
                         onClick={() => {
-                          setEditingAvatar(!editingAvatar);
+                          setEditingProfile(!editingProfile);
                           setNewAvatarUrl(currentUser.avatarUrl || "");
+                          setNewAddress(currentUser.address || "");
                         }}
                         className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] tracking-tighter uppercase font-bold"
                       >
                         Edit
                       </button>
-                    </div>
-                    <div className="flex-1">
+                      </div>
+                      <div className="flex-1">
                       <div className="text-[10px] tracking-[0.25em] uppercase text-gray-500">Identity active</div>
                       <div className="text-lg font-bold text-white">{currentUser.username}</div>
                       <div className="text-[10px] tracking-[0.15em] text-gray-500 lowercase">{currentUser.email}</div>
-                    </div>
-                  </div>
+                      {currentUser.address && (
+                        <div className="text-[8px] tracking-[0.15em] text-accent-primary uppercase mt-1">Base: {currentUser.address}</div>
+                      )}
+                      </div>
+                      </div>
 
-                  {editingAvatar && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                      {editingProfile && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                       <input
                         type="url"
                         placeholder="NEW_AVATAR_URL"
@@ -398,24 +451,30 @@ export default function Home() {
                         value={newAvatarUrl}
                         onChange={(e) => setNewAvatarUrl(e.target.value)}
                       />
+                      <input
+                        type="text"
+                        placeholder="OFFICE_OR_HOME_ADDRESS"
+                        className="w-full px-4 py-2 bg-black/40 text-white rounded-xl border border-white/5 focus:outline-none focus:ring-1 focus:ring-accent-primary/50 text-[10px] uppercase tracking-widest placeholder-gray-600"
+                        value={newAddress}
+                        onChange={(e) => setNewAddress(e.target.value)}
+                      />
                       <div className="flex gap-2">
                         <button
-                          onClick={handleUpdateAvatar}
+                          onClick={handleUpdateProfile}
                           disabled={updateLoading}
                           className="flex-1 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-widest"
                         >
                           {updateLoading ? "Syncing..." : "Update"}
                         </button>
                         <button
-                          onClick={() => setEditingAvatar(false)}
+                          onClick={() => setEditingProfile(false)}
                           className="px-4 py-2 text-gray-500 hover:text-white text-[10px] font-bold transition-all uppercase tracking-widest"
                         >
                           Cancel
                         </button>
                       </div>
-                    </div>
-                  )}
-
+                      </div>
+                      )}
                   <div className="rounded-2xl border border-white/5 bg-black/30 p-4 text-[10px] tracking-[0.15em] text-gray-400 uppercase">
                     Friend search is enabled for this session. Invites are stored on newly created polls.
                   </div>
@@ -495,8 +554,40 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="glass-panel p-2 rounded-2xl max-w-4xl shadow-2xl flex flex-col md:flex-row gap-2">
-            <input
+          <div className="flex flex-col gap-4 max-w-4xl">
+            <div className="flex flex-wrap gap-2 mb-2">
+              {[
+                { id: "device", label: "Current_Loc" },
+                { id: "address", label: "Custom_Addr" },
+                { id: "midpoint", label: "Group_Midpoint" },
+              ].map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => setLocationMode(mode.id as "device" | "address" | "midpoint")}                  disabled={mode.id === "midpoint" && selectedInvitees.length === 0}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-bold tracking-[0.2em] uppercase transition-all border ${
+                    locationMode === mode.id
+                      ? "bg-accent-primary/20 border-accent-primary text-white glow-accent"
+                      : "bg-black/40 border-white/5 text-gray-500 hover:text-gray-300 disabled:opacity-20 disabled:cursor-not-allowed"
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+
+            {locationMode === "address" && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300 mb-2">
+                <input
+                  type="text"
+                  placeholder="ENTER_TARGET_ADDRESS"
+                  className="w-full px-6 py-3 bg-black/40 text-white rounded-xl border border-white/5 focus:outline-none focus:ring-1 focus:ring-accent-primary/50 transition-all text-xs uppercase tracking-widest placeholder-gray-700"
+                  value={customAddress}
+                  onChange={(e) => setCustomAddress(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="glass-panel p-2 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-2">            <input
               type="text"
               placeholder="SEARCH_TARGET (E.G. SUSHI, SALAD)"
               className="flex-1 px-6 py-4 bg-black/40 text-white rounded-xl border border-white/5 focus:outline-none focus:ring-1 focus:ring-accent-primary/50 transition-all text-sm uppercase tracking-widest placeholder-gray-600"
@@ -527,7 +618,8 @@ export default function Home() {
             <p className="text-accent-primary text-[10px] font-bold tracking-[0.3em] uppercase animate-pulse">! {error}</p>
           )}
         </div>
-      </header>
+      </div>
+    </header>
 
       <main className="flex-1 max-w-6xl mx-auto px-6 py-12 w-full relative">
         {hasSearched && !loading && !error && results.length > 0 && (

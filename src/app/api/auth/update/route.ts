@@ -16,10 +16,39 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "ERR_BAD_REQUEST: Data packet corrupted." }, { status: 400 });
     }
 
-    const { avatarUrl } = body;
+    const { avatarUrl, address } = body;
+    let lat = null;
+    let lng = null;
+
+    if (address && address.trim() !== (user.address || "")) {
+      const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+      if (apiKey) {
+        const url = "https://places.googleapis.com/v1/places:searchText";
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": "places.location",
+          },
+          body: JSON.stringify({ textQuery: address, maxResultCount: 1 }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const place = data.places?.[0];
+          if (place && place.location) {
+            lat = place.location.latitude;
+            lng = place.location.longitude;
+          }
+        }
+      }
+    }
 
     const updatedUser = await updateUser(user.id, {
       avatarUrl: avatarUrl?.trim() || null,
+      address: address?.trim() || null,
+      lat: lat ?? user.lat,
+      lng: lng ?? user.lng,
     });
 
     return NextResponse.json({
@@ -28,6 +57,9 @@ export async function POST(request: Request) {
         email: updatedUser.email,
         username: updatedUser.username,
         avatarUrl: updatedUser.avatarUrl,
+        address: updatedUser.address,
+        lat: updatedUser.lat,
+        lng: updatedUser.lng,
       },
     });
   } catch (error) {

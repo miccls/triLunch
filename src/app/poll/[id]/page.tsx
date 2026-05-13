@@ -15,6 +15,9 @@ type SessionUser = {
   email: string;
   username: string;
   avatarUrl: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 type SearchUser = {
@@ -22,6 +25,9 @@ type SearchUser = {
   username: string;
   avatarUrl: string | null;
   email: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 type PollOption = {
